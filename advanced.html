@@ -9,14 +9,15 @@
 <p><button id=p>PLAY</button>
 <p>JS export (smaller if volume = 1 & oscillator = "sine")
 <p><textarea id=exp></textarea>
-
+<p>strict JS export
+<p><textarea id=strictJSexp></textarea>
 
 <style>
 * { box-sizing: border-box }
 #c { width: 5000px; }
 .note { width: 20px; height: 20px; float: left; border: 1px solid; }
 [line="13"] { background: #aaa }
-#exp, #exp2 { width: 90vh; height: 100px }
+#exp, #exp2,  #strictJSexp { width: 90vh; height: 100px }
 </style>
 
 <script>
@@ -49,7 +50,7 @@ toggle=(i,j,t,f)=>{
 p.onclick=()=>{
 
   A.close();
-  
+
   wave="sine";
   if(square.checked) wave = "square";
   if(sawtooth.checked) wave = "sawtooth";
@@ -71,8 +72,27 @@ p.onclick=()=>{
       keys[i] = df[i][0];
       values[i] = df[i][1];
     }
-    //exp.value = `with(new AudioContext)for(i in D=${JSON.stringify(df)})with(createOscillator())if(D[i])connect(destination),frequency.value=${+z.value}*1.06**(14-D[i][0]),${(wave=="sine")?"":"type='"+wave+"',"}start(D[i][1]*${(""+t.value/1e3).replace("0.",".")}),stop(D[i][1]*${(""+t.value/1e3).replace("0.",".")}+${(""+t.value/1e3).replace("0.",".")})`;
-    
-    eval(exp.value = `with(new AudioContext)${JSON.stringify(keys)}.map((v,i)=>{with(createOscillator())v&&start(e=${JSON.stringify(values)}[i]/5,connect(destination),frequency.value=988/1.06**v${(wave=="sine")?"":",type='"+wave+"',"})+stop(e+.2)})`);
+    exp.value = `with(new AudioContext)for(i in D=${JSON.stringify(df)})with(createOscillator())if(D[i])connect(destination),frequency.value=${+z.value}*1.06**(14-D[i][0]),${(wave=="sine")?"":"type='"+wave+"',"}start(D[i][1]*${(""+t.value/1e3).replace("0.",".")}),stop(D[i][1]*${(""+t.value/1e3).replace("0.",".")}+${(""+t.value/1e3).replace("0.",".")})`;
+
+    strictJSexp.value = `(function () {
+      let a = new AudioContext
+
+      let D = [];
+      for(let i in D=${JSON.stringify(df)})
+      {
+        let o = a.createOscillator()
+        if(D[i])
+        {
+            o.connect(a.destination)
+            o.frequency.value=${+z.value}*1.06**(14-D[i][0])
+            ${(wave=="sine")?"":"o.type='"+wave+"'"}
+            o.start(D[i][1]*${(""+t.value/1e3).replace("0.",".")})
+            o.stop(D[i][1]*${(""+t.value/1e3).replace("0.",".")}+${(""+t.value/1e3).replace("0.",".")});
+        }
+      }
+    })();
+    `;
+
+    eval(exp.value);
 }
 </script>

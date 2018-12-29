@@ -9,14 +9,15 @@
 <p><button id=p>PLAY</button>
 <p>JS export (smaller if volume = 1 & oscillator = "sine")
 <p><textarea id=exp></textarea>
-
+<p>strict JS export
+<p><textarea id=strictJSexp></textarea>
 
 <style>
 * { box-sizing: border-box }
 #c { width: 5000px; }
 .note { width: 20px; height: 20px; float: left; border: 1px solid; }
 [line="13"] { background: #ccc }
-#exp, #exp2 { width: 90vh; height: 100px }
+#exp, #exp2, #strictJSexp { width: 90vh; height: 100px }
 </style>
 
 <script>
@@ -63,7 +64,7 @@ toggle=(i,j,t,f)=>{
 p.onclick=()=>{
 
   A.close();
-  
+
   wave="sine";
   if(square.checked) wave = "square";
   if(sawtooth.checked) wave = "sawtooth";
@@ -77,9 +78,9 @@ p.onclick=()=>{
       }
     }
   }
-  
-  exp.value = 
-    
+
+  exp.value =
+
 `with(new AudioContext)
 with(G=createGain())
 for(i in D=[${df}])
@@ -93,7 +94,30 @@ gain.setValueAtTime(1,i*${(""+t.value/1e3).replace("0.",".")}),
 gain.setTargetAtTime(.0001,i*${(""+t.value/1e3).replace("0.",".")}+${(""+((t.value/1e3)-.02).toFixed(2)).replace("0.",".")},.005),
 stop(i*${(""+t.value/1e3).replace("0.",".")}+${(""+((t.value/1e3)-.01).toFixed(2)).replace("0.",".")})`;
 
-  eval(exp.value);
+  strictJSexp.value =
+`(function () {
+  let a = new AudioContext
+  let G=a.createGain()
+  let D = [];
+  for(let i in D=[${df}])
+  {
+    let o = a.createOscillator()
+    if(D[i])
+    {
+        o.connect(G)
+        G.connect(a.destination)
+        o.start(i*${(""+t.value/1e3).replace("0.",".")})
+        o.frequency.setValueAtTime(${+z.value}*1.06**(13-D[i]),i*${(""+t.value/1e3).replace("0.",".")})
+        ${(wave=="sine")?"":"o.type='"+wave+"'"}
+        G.gain.setValueAtTime(1,i*${(""+t.value/1e3).replace("0.",".")})
+        G.gain.setTargetAtTime(.0001,i*${(""+t.value/1e3).replace("0.",".")}+${(""+((t.value/1e3)-.02).toFixed(2)).replace("0.",".")},.005)
+        o.stop(i*${(""+t.value/1e3).replace("0.",".")}+${(""+((t.value/1e3)-.01).toFixed(2)).replace("0.",".")});
+    }
+  }
 
+})();
+`;
+
+  eval(exp.value);
 }
 </script>
